@@ -1,0 +1,15 @@
+{
+  "name": "gimkit-client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "readline-sync": "^1.4.10",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5",
+    "ws": "^7.2.1"
+  }
+}

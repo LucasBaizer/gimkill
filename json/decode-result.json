@@ -1,0 +1,17 @@
+{
+	"type": 2,
+	"data": [
+		"message-TESB0ftBpJE9gU",
+		{
+			"key": "STATE_UPDATE",
+			"data": {
+				"type": "BALANCE_CHANGE",
+				"value": {
+					"balanceChangeIfCorrect": 3,
+					"balanceChangeIfIncorrect": -1
+				}
+			}
+		}
+	],
+	"nsp": "/"
+}

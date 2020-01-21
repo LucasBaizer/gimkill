@@ -1,0 +1,18 @@
+{
+	"type": 2,
+	"data": [
+		"blueboat_SEND_MESSAGE",
+		{
+			"room": "TESB0ftBpJE9gU",
+			"key": "QUESTION_ANSWERED",
+			"data": {
+				"questionId": "5e25fc7c2cceb80022cc53a5",
+				"answer": "5e25fc7c2cceb80022cc53a9"
+			}
+		}
+	],
+	"options": {
+		"compress": true
+	},
+	"nsp": "/"
+}
