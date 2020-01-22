@@ -1,17 +1,31 @@
 {
 	"type": 2,
 	"data": [
-		"message-TESB0ftBpJE9gU",
+		"blueboat_SEND_MESSAGE",
 		{
-			"key": "STATE_UPDATE",
+			"room": "1k3tTm3sX4Gz7x",
+			"key": "ASSIGNMENT_COMPLETE",
 			"data": {
-				"type": "BALANCE_CHANGE",
-				"value": {
-					"balanceChangeIfCorrect": 3,
-					"balanceChangeIfIncorrect": -1
-				}
+				"playerName": "Lucas",
+				"groupId": "5e25fd812cceb80022cc5b80",
+				"groupMemberId": "5e25fd812cceb80022cc5b81",
+				"stats": {
+					"correct": 1,
+					"wrong": 0,
+					"correctQuestions": [
+						"5e25fc052cceb80022cc513b"
+					],
+					"wrongQuestions": [],
+					"correctBalance": 500000,
+					"wrongBalance": 0
+				},
+				"completedAt": "2020-01-22T00:26:21.374Z",
+				"startedAt": "2020-01-22T00:26:15.455Z"
 			}
 		}
 	],
+	"options": {
+		"compress": true
+	},
 	"nsp": "/"
 }

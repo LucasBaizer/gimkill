@@ -5,8 +5,8 @@ const Encoder = require('./encoder');
 const request = require('request-promise');
 const sleep = require('./sleep');
 
-const url = 'https://www.gimkit.com/play?a=5e25fd9fb3182f0022544161&class=5e25fd812cceb80022cc5b80' || readlineSync.question('Gimkit assignment URL: ');
-const name = 'Lucas' || readlineSync.question('Your name: ');
+const url = readlineSync.question('Gimkit assignment URL: ');
+const name = readlineSync.question('Your name: ');
 
 /**
  * @typedef {import('./lib').GameData} GameData
@@ -84,7 +84,10 @@ const name = 'Lucas' || readlineSync.question('Your name: ');
 			upgrades: null
 		}
 	};
+	const startDate = new Date();
 	let lastRid = Math.random();
+	let looping = true;
+	let answered = 0;
 
 	const server = JSON.parse(await request.get('https://www.gimkit.com/matchmaker/find-server')).url;
 	console.log('Using WebSocket server: ' + server);
@@ -211,7 +214,7 @@ const name = 'Lucas' || readlineSync.question('Your name: ');
 							}));
 
 							let nextQuestion = 0;
-							while (true) {
+							while (looping) {
 								const question = masterData.state.GAME_QUESTIONS[nextQuestion++];
 								socket.send(encoder.encodeMessageBuffer({
 									type: 2,
@@ -231,10 +234,54 @@ const name = 'Lucas' || readlineSync.question('Your name: ');
 									},
 									nsp: '/'
 								}));
-								await sleep(50);
+								answered++;
 
-								console.log(masterData.state.BALANCE);
-								
+								await sleep(200);
+
+								if (!looping) {
+									break;
+								}
+
+								for (const upgrade of masterData.staticState.upgrades) {
+									if (upgrade.name !== 'Insurance') {
+										let mappedName = null;
+										if (upgrade.name === 'Money Per Question') {
+											mappedName = 'moneyPerQuestion';
+										} else if (upgrade.name === 'Streak Bonus') {
+											mappedName = 'streakBonus';
+										} else if (upgrade.name === 'Multiplier') {
+											mappedName = 'multiplier';
+										}
+
+										const order = upgrade.levels.sort((a, b) => b.price - a.price);
+										for (let i = 0; i < order.length; i++) {
+											const item = order[i];
+											if (item.price <= masterData.state.BALANCE && (order.length - i) > masterData.state.UPGRADE_LEVELS[mappedName]) {
+												console.log('Purchasing ' + upgrade.name + ' level ' + (order.length - i) + '.');
+												socket.send(encoder.encodeMessageBuffer({
+													type: 2,
+													data: [
+														'blueboat_SEND_MESSAGE',
+														{
+															room: masterData.roomId,
+															key: 'UPGRADE_PURCHASED',
+															data: {
+																upgradeName: upgrade.name,
+																level: (order.length - i)
+															}
+														}
+													],
+													options: {
+														compress: true
+													},
+													nsp: '/'
+												}));
+												break;
+											}
+										}
+									}
+								}
+
 								if (nextQuestion === masterData.state.GAME_QUESTIONS.length) {
 									nextQuestion = 0;
 								}
@@ -244,11 +291,56 @@ const name = 'Lucas' || readlineSync.question('Your name: ');
 						const { key, data } = decoded.data[1];
 						if (key === 'STATE_UPDATE') {
 							masterData.state[data.type] = data.value;
+							if (data.type === 'COMPLETED_ASSIGNMENT' && data.value) {
+								console.log('Completed the assignment.');
+
+								const encoder = new Encoder();
+								const groupMember = groupMembers.filter(member => member.name === name)[0];
+								console.log('Setting start date to: ' + new Date(startDate.getTime() - Math.floor(Math.random() * 1000 * 60 * 60 * 8)));
+								socket.send(encoder.encodeMessageBuffer({
+									type: 2,
+									data: [
+										'blueboat_SEND_MESSAGE',
+										{
+											room: masterData.roomId,
+											key: 'ASSIGNMENT_COMPLETE',
+											data: {
+												playerName: name,
+												groupId: groupMember.group,
+												groupMemberId: groupMember._id,
+												stats: {
+													correct: answered,
+													wrong: 0,
+													correctQuestions: masterData.state.GAME_QUESTIONS.map(question => question._id),
+													wrongQuestions: [],
+													correctBalance: masterData.state.BALANCE,
+													wrongBalance: 0
+												},
+												completedAt: new Date().toISOString(),
+												startedAt: (new Date(startDate.getTime() - Math.floor(Math.random() * 1000 * 60 * 60 * 8))).toISOString()
+											}
+										}
+									],
+									options: {
+										compress: true
+									},
+									nsp: '/'
+								}));
+
+								looping = false;
+
+								setTimeout(() => {
+									process.exit(0);
+								}, 1000);
+							}
+							// console.log(masterData.state);
 						} else if (key === 'PLAYER_JOINS_STATIC_STATE') {
 							masterData.staticState = data;
 						} else if (key === 'blueboat_JOINED_ROOM') {
 							console.log('Successfully joined the room.');
-						} else {
+						} else if (key === 'NEW_ACTIVITY_ITEM') {
+							console.log(data.name + ': ' + data.action + '. You have $' + masterData.state.BALANCE);
+						} else if (key !== 'ASSIGNMENT_IS_COMPLETE') {
 							console.log('Received unhandled packet...');
 							console.log(key);
 							console.log(data);
